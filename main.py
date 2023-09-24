@@ -133,7 +133,7 @@ class ParentLoginScreen(Screen):
         password = self.password.text
 
         if user_exists(username, password):
-            self.manager.current = "login"
+            self.manager.current = "parent"
         else:
             # Display an error message to the user if the login fails.
             self.ids.error_label.text = "Invalid username or password"
@@ -188,7 +188,7 @@ class ChildLoginScreen(Screen):
         self.add_widget(self.window)
 
     def login_button_click(self, instance):
-        self.manager.current = "login"
+        self.manager.current = "child"
 
     def create_account_button_click(self, instance):
         self.manager.current = "account_creation"
@@ -247,6 +247,47 @@ class AccountCreationScreen(Screen):
             insert_user(username, password)
             self.manager.current = "login"
 
+        else:
+            # Display an error message to the user if the login fails.
+            self.ids.error_label.text = "Invalid username or password"
+
+
+class ParentScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        self.testtile = Label(text="Test",
+                              font_size=20,
+                              color="#FFB6C1"
+                              )
+
+        self.window.add_widget(self.testtile)
+
+        self.add_widget(self.window)
+
+class ChildScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        self.testtile = Label(text="Test2",
+                              font_size=20,
+                              color="#FFB6C1"
+                              )
+
+        self.window.add_widget(self.testtile)
+
+        self.add_widget(self.window)
+
 
 class MyApp(App):
     def build(self):
@@ -256,11 +297,15 @@ class MyApp(App):
         parent_login_screen = ParentLoginScreen(name="parent_login")
         child_login_screen = ChildLoginScreen(name="child_login")
         account_creation_screen = AccountCreationScreen(name="account_creation")
+        parent_screen = ParentScreen(name="parent")
+        child_screen = ChildScreen(name="child")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
         sm.add_widget(child_login_screen)
         sm.add_widget(account_creation_screen)
+        sm.add_widget(parent_screen)
+        sm.add_widget(child_screen)
 
         return sm
 
