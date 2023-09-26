@@ -55,14 +55,22 @@ class LoginScreen(Screen):
                               bold=True,
                               background_color="#FFB6C1"
                               )
+        exit_button = Button(text="Exit",
+                                size_hint=(1, None),
+                                height=40,
+                                bold=True,
+                                background_color="#FFB6C1"
+                                )
 
         # Adding buttons to window
         self.window.add_widget(parent_button)
         self.window.add_widget(child_button)
+        self.window.add_widget(exit_button)
 
         # Binding buttons
         parent_button.bind(on_press=self.parent_button_click)
         child_button.bind(on_press=self.child_button_click)
+        exit_button.bind(on_press=exit)
 
         # Add the GridLayout to the screen
         self.add_widget(self.window)
@@ -111,6 +119,12 @@ class ParentLoginScreen(Screen):
                                      bold=True,
                                      background_color="#FFB6C1"
                                      )
+        self.return_button = Button(text="Return to Parent Login",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
         self.error_label = Label(text="", color="#FF0000")
 
         # Adding widgets to window
@@ -120,13 +134,18 @@ class ParentLoginScreen(Screen):
         self.window.add_widget(self.password)
         self.window.add_widget(self.login)
         self.window.add_widget(self.create_account)
+        self.window.add_widget(self.return_button)
 
         # Binding button
         self.login.bind(on_press=self.login_button_click)
         self.create_account.bind(on_press=self.create_account_button_click)
+        self.return_button.bind(on_press=self.return_button_click)
 
         # Add the GridLayout to the screen
         self.add_widget(self.window)
+
+    def return_button_click(self, instance):
+        self.manager.current = "login"
 
     def login_button_click(self, instance):
         username = self.user.text
@@ -173,6 +192,19 @@ class ChildLoginScreen(Screen):
                             bold=True,
                             background_color="#FFB6C1"
                             )
+        self.create_account = Button(text="Create Account",
+                                        size_hint=(1, None),
+                                        height=40,
+                                        bold=True,
+                                        background_color="#FFB6C1"
+                                        )
+        self.return_button = Button(text="Return to Child Login",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+        self.error_label = Label(text="", color="#FF0000")
 
         # Same as parent login screen
         self.window.add_widget(self.usertitle)
@@ -180,11 +212,14 @@ class ChildLoginScreen(Screen):
         self.window.add_widget(self.passtitle)
         self.window.add_widget(self.password)
         self.window.add_widget(self.login)
+        self.window.add_widget(self.create_account)
+        self.window.add_widget(self.return_button)
 
         # Same as parent login screen
         self.login.bind(on_press=self.login_button_click)
+        self.create_account.bind(on_press=self.create_account_button_click)
+        self.return_button.bind(on_press=self.return_button_click)
 
-        # Same shit
         self.add_widget(self.window)
 
     def login_button_click(self, instance):
@@ -192,6 +227,9 @@ class ChildLoginScreen(Screen):
 
     def create_account_button_click(self, instance):
         self.manager.current = "account_creation"
+
+    def return_button_click(self, instance):
+        self.manager.current = "login"
 
 
 class AccountCreationScreen(Screen):
@@ -225,6 +263,13 @@ class AccountCreationScreen(Screen):
                                      bold=True,
                                      background_color="#FFB6C1"
                                      )
+        self.return_button = Button(text="Return to Login",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+        self.error_label = Label(text="", color="#FF0000")
 
         # Adding widgets to window
         self.window.add_widget(self.usertitle)
@@ -232,9 +277,11 @@ class AccountCreationScreen(Screen):
         self.window.add_widget(self.passtitle)
         self.window.add_widget(self.password)
         self.window.add_widget(self.create_account)
+        self.window.add_widget(self.return_button)
 
         # Binding button
         self.create_account.bind(on_press=self.create_account_button_click)
+        self.return_button.bind(on_press=self.return_button_click)
 
         # Add the GridLayout to the screen
         self.add_widget(self.window)
@@ -251,6 +298,8 @@ class AccountCreationScreen(Screen):
             # Display an error message to the user if the login fails.
             self.manager.current = "invalid_login"
 
+    def return_button_click(self, instance):
+        self.manager.current = "login"
 
 class ParentScreen(Screen):
     def __init__(self, **kwargs):
