@@ -136,7 +136,7 @@ class ParentLoginScreen(Screen):
             self.manager.current = "parent"
         else:
             # Display an error message to the user if the login fails.
-            self.ids.error_label.text = "Invalid username or password"
+            self.manager.current = "invalid_login"
 
     def create_account_button_click(self, instance):
         self.manager.current = "account_creation"
@@ -249,7 +249,7 @@ class AccountCreationScreen(Screen):
 
         else:
             # Display an error message to the user if the login fails.
-            self.ids.error_label.text = "Invalid username or password"
+            self.manager.current = "invalid_login"
 
 
 class ParentScreen(Screen):
@@ -270,6 +270,7 @@ class ParentScreen(Screen):
 
         self.add_widget(self.window)
 
+
 class ChildScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -289,6 +290,40 @@ class ChildScreen(Screen):
         self.add_widget(self.window)
 
 
+class InvalidLoginScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        self.testtile = Label(text="Invalid Login",
+                              font_size=20,
+                              color="#FFB6C1"
+                              )
+        self.return_button = Button(text="Return",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+
+        self.window.add_widget(self.testtile)
+        self.window.add_widget(self.return_button)
+
+        # Binding button
+        self.return_button.bind(on_press=self.return_button_click)
+
+        # Add the GridLayout to the screen
+        self.add_widget(self.window)
+
+    def return_button_click(self, instance):
+        self.manager.current = "login"
+
+
+
 class MyApp(App):
     def build(self):
         sm = ScreenManager()
@@ -299,6 +334,7 @@ class MyApp(App):
         account_creation_screen = AccountCreationScreen(name="account_creation")
         parent_screen = ParentScreen(name="parent")
         child_screen = ChildScreen(name="child")
+        invalid_login_screen = InvalidLoginScreen(name="invalid_login")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
@@ -306,6 +342,7 @@ class MyApp(App):
         sm.add_widget(account_creation_screen)
         sm.add_widget(parent_screen)
         sm.add_widget(child_screen)
+        sm.add_widget(invalid_login_screen)
 
         return sm
 
