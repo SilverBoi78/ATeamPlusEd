@@ -352,7 +352,6 @@ class ParentScreen(Screen):
         self.add_widget(self.window)
 
     def assigned_tasks_button_click(self, instance):
-        # Navigate to the AssignedTasksScreen when the button is clicked
         self.manager.current = "assigned_tasks"
 
     def logout_button_click(self, instance):
@@ -368,14 +367,44 @@ class ChildScreen(Screen):
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.window.spacing = 30
 
-        self.testtile = Label(text="Test2",
-                              font_size=20,
-                              color="#FFB6C1"
-                              )
+        self.child_title = Label(text="Welcome, Child",
+                                 font_size=24,
+                                 color="#FFB6C1"
+                                 )
 
-        self.window.add_widget(self.testtile)
+        self.child_info = Label(text="Dashboard.",
+                                font_size=16,
+                                color="#FFB6C1"
+                                )
 
+        self.tasks_button = Button(text="List of Tasks",
+                                   size_hint=(1, None),
+                                   height=40,
+                                   bold=True,
+                                   background_color="#FFB6C1"
+                                   )
+
+        self.logout_button = Button(text="Logout",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+
+        self.window.add_widget(self.child_title)
+        self.window.add_widget(self.child_info)
+        self.window.add_widget(self.tasks_button)
+        self.window.add_widget(self.logout_button)
+
+        self.tasks_button.bind(on_press=self.tasks_button_click)
+        self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
+
+    def tasks_button_click(self, instance):
+        self.manager.current = "child_tasks"
+
+    def logout_button_click(self, instance):
+        self.manager.current = "login"
 
 
 class AssignedTasksScreen(Screen):
@@ -419,6 +448,37 @@ class AssignedTasksScreen(Screen):
     def back_button_click(self, instance):
         # Navigate back to the parent screen
         self.manager.current = "parent"
+
+
+class Child_Tasks(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        self.child_title = Label(text="Test",
+                                 font_size=24,
+                                 color="#FFB6C1"
+                                 )
+
+        self.back_button = Button(text="Back to Parent Dashboard",
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#FFB6C1"
+                                  )
+
+        self.window.add_widget(self.child_title)
+        self.window.add_widget(self.back_button)
+
+        self.back_button.bind(on_press=self.back_button_click)
+        self.add_widget(self.window)
+
+    def back_button_click(self, instance):
+        self.manager.current = "child"
 
 
 class InvalidLoginScreen(Screen):
@@ -500,6 +560,7 @@ class MyApp(App):
         invalid_login_screen = InvalidLoginScreen(name="invalid_login")
         invalid_acc_creation = InvalidAccCreation(name="invalid_acc_creation")
         assigned_tasks_screen = AssignedTasksScreen(name="assigned_tasks")
+        child_tasks = Child_Tasks(name="child_tasks")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
@@ -510,6 +571,7 @@ class MyApp(App):
         sm.add_widget(invalid_login_screen)
         sm.add_widget(invalid_acc_creation)
         sm.add_widget(assigned_tasks_screen)
+        sm.add_widget(child_tasks)
 
         return sm
 
