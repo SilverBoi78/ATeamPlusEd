@@ -56,11 +56,11 @@ class LoginScreen(Screen):
                               background_color="#FFB6C1"
                               )
         exit_button = Button(text="Exit",
-                                size_hint=(1, None),
-                                height=40,
-                                bold=True,
-                                background_color="#FFB6C1"
-                                )
+                             size_hint=(1, None),
+                             height=40,
+                             bold=True,
+                             background_color="#FFB6C1"
+                             )
 
         # Adding buttons to window
         self.window.add_widget(parent_button)
@@ -193,11 +193,11 @@ class ChildLoginScreen(Screen):
                             background_color="#FFB6C1"
                             )
         self.create_account = Button(text="Create Account",
-                                        size_hint=(1, None),
-                                        height=40,
-                                        bold=True,
-                                        background_color="#FFB6C1"
-                                        )
+                                     size_hint=(1, None),
+                                     height=40,
+                                     bold=True,
+                                     background_color="#FFB6C1"
+                                     )
         self.return_button = Button(text="Return to Menu",
                                     size_hint=(1, None),
                                     height=40,
@@ -308,6 +308,7 @@ class AccountCreationScreen(Screen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
+
 class ParentScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -317,14 +318,45 @@ class ParentScreen(Screen):
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.window.spacing = 30
 
-        self.testtile = Label(text="Test",
-                              font_size=20,
-                              color="#FFB6C1"
-                              )
+        self.parent_title = Label(text="Welcome, Parent",
+                                  font_size=24,
+                                  color="#FFB6C1"
+                                  )
 
-        self.window.add_widget(self.testtile)
+        self.parent_info = Label(text="Dashboard.",
+                                 font_size=16,
+                                 color="#FFB6C1"
+                                 )
 
+        self.assigned_tasks_button = Button(text="Assigned Tasks",
+                                            size_hint=(1, None),
+                                            height=40,
+                                            bold=True,
+                                            background_color="#FFB6C1"
+                                            )
+
+        self.logout_button = Button(text="Logout",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+
+        self.window.add_widget(self.parent_title)
+        self.window.add_widget(self.parent_info)
+        self.window.add_widget(self.assigned_tasks_button)
+        self.window.add_widget(self.logout_button)
+
+        self.assigned_tasks_button.bind(on_press=self.assigned_tasks_button_click)
+        self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
+
+    def assigned_tasks_button_click(self, instance):
+        # Navigate to the AssignedTasksScreen when the button is clicked
+        self.manager.current = "assigned_tasks"
+
+    def logout_button_click(self, instance):
+        self.manager.current = "login"
 
 
 class ChildScreen(Screen):
@@ -344,6 +376,49 @@ class ChildScreen(Screen):
         self.window.add_widget(self.testtile)
 
         self.add_widget(self.window)
+
+
+class AssignedTasksScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        # Add widgets for viewing assigned tasks here
+        self.tasks_label = Label(text="Assigned Tasks",
+                                 font_size=24,
+                                 color="#FFB6C1"
+                                 )
+
+        self.tasks_info = Label(text="List of assigned tasks goes here.",
+                                font_size=16,
+                                color="#FFB6C1"
+                                )
+
+        self.back_button = Button(text="Back to Parent Dashboard",
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#FFB6C1"
+                                  )
+
+        # Adding widgets to the GridLayout
+        self.window.add_widget(self.tasks_label)
+        self.window.add_widget(self.tasks_info)
+        self.window.add_widget(self.back_button)
+
+        # Binding the back button to return to the parent screen
+        self.back_button.bind(on_press=self.back_button_click)
+
+        # Add the GridLayout to the screen
+        self.add_widget(self.window)
+
+    def back_button_click(self, instance):
+        # Navigate back to the parent screen
+        self.manager.current = "parent"
 
 
 class InvalidLoginScreen(Screen):
@@ -378,6 +453,7 @@ class InvalidLoginScreen(Screen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
+
 class InvalidAccCreation(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -410,6 +486,7 @@ class InvalidAccCreation(Screen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
+
 class MyApp(App):
     def build(self):
         sm = ScreenManager()
@@ -422,6 +499,7 @@ class MyApp(App):
         child_screen = ChildScreen(name="child")
         invalid_login_screen = InvalidLoginScreen(name="invalid_login")
         invalid_acc_creation = InvalidAccCreation(name="invalid_acc_creation")
+        assigned_tasks_screen = AssignedTasksScreen(name="assigned_tasks")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
@@ -431,6 +509,7 @@ class MyApp(App):
         sm.add_widget(child_screen)
         sm.add_widget(invalid_login_screen)
         sm.add_widget(invalid_acc_creation)
+        sm.add_widget(assigned_tasks_screen)
 
         return sm
 
