@@ -17,6 +17,147 @@ cursor = conn.cursor()
 # Create a table for storing user data if it doesn't exist yet.
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)")
 
+
+# SQL commands to create the tables
+# 1. Users Table
+create_users_table = """
+CREATE TABLE IF NOT EXISTS users (
+    user_id INTEGER PRIMARY KEY,
+    family_id INTEGER,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    account_type TEXT CHECK(account_type IN ('adult', 'child')),
+    parent_id INTEGER,
+    email TEXT,
+    FOREIGN KEY (family_id) REFERENCES family(family_id),
+    FOREIGN KEY (parent_id) REFERENCES users(user_id)
+);
+"""
+
+# 2. Transactions Table
+create_transactions_table = """
+CREATE TABLE IF NOT EXISTS transactions (
+    transaction_id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    family_id INTEGER,
+    amount REAL NOT NULL,
+    transaction_date DATE,
+    description TEXT,
+    frequency TEXT,
+    status TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (family_id) REFERENCES family(family_id)
+);
+"""
+
+# 3. Tasks Table
+create_tasks_table = """
+CREATE TABLE IF NOT EXISTS tasks (
+    task_id INTEGER PRIMARY KEY,
+    child_id INTEGER,
+    description TEXT,
+    reward REAL,
+    task_image TEXT,
+    status TEXT,
+    FOREIGN KEY (child_id) REFERENCES users(user_id)
+);
+"""
+
+# 4. Notifications Table
+create_notifications_table = """
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id INTEGER PRIMARY KEY,
+    parent_id INTEGER,
+    child_id INTEGER,
+    task_id INTEGER,
+    status TEXT,
+    FOREIGN KEY (parent_id) REFERENCES users(user_id),
+    FOREIGN KEY (child_id) REFERENCES users(user_id),
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id)
+);
+"""
+
+# 5. Balances Table
+create_balances_table = """
+CREATE TABLE IF NOT EXISTS balances (
+    balance_id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    account_balance REAL,
+    savings_balance REAL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+"""
+
+# 6. Family Table
+create_family_table = """
+CREATE TABLE IF NOT EXISTS family (
+    family_id INTEGER PRIMARY KEY,
+    family_name TEXT
+);
+"""
+
+# 7. Archived Transactions Table
+create_archived_transactions_table = """
+CREATE TABLE IF NOT EXISTS archived_transactions (
+    archived_transaction_id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    family_id INTEGER,
+    amount REAL,
+    transaction_date DATE,
+    description TEXT,
+    frequency TEXT,
+    status TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (family_id) REFERENCES family(family_id)
+);
+"""
+
+# 8. Recurring Transactions Table
+create_recurring_transactions_table = """
+CREATE TABLE IF NOT EXISTS recurring_transactions (
+    recurring_id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    amount REAL,
+    start_date DATE,
+    end_date DATE,
+    description TEXT,
+    frequency TEXT,
+    next_due_date DATE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+"""
+
+# Execute the SQL commands to create the tables
+commands = [
+    create_users_table,
+    create_transactions_table,
+    create_tasks_table,
+    create_notifications_table,
+    create_balances_table,
+    create_family_table,
+    create_archived_transactions_table,
+    create_recurring_transactions_table
+]
+
+# Execute each command
+for command in commands:
+    cursor.execute(command)
+
+# Commit the changes
+conn.commit()
+
+# Querying the database to list all tables
+tables_query = "SELECT name FROM sqlite_master WHERE type='table';"
+cursor.execute(tables_query)
+tables = cursor.fetchall()
+
+# Print the table names
+for table in tables:
+    print(table[0])
+
+
+
+
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
 
