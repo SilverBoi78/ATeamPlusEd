@@ -15,18 +15,18 @@ conn = sqlite3.connect('user_data.db')
 cursor = conn.cursor()
 
 # Create a table for storing user data if it doesn't exist yet.
-cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
 
 
-def insert_user(username, password):
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+def insert_user(username, password, account_type):
+    cursor.execute("INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)", (username, password, account_type))
 
 
-def user_exists(username, password):
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+def user_exists(username, password, account_type):
+    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND account_type = ?", (username, password, account_type))
     return cursor.fetchone() is not None
 
 
@@ -91,6 +91,7 @@ class ParentLoginScreen(Screen):
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.window.spacing = 30
 
+
         self.usertitle = Label(text="Username:",
                                font_size=20,
                                color="#FFB6C1"
@@ -150,15 +151,17 @@ class ParentLoginScreen(Screen):
     def login_button_click(self, instance):
         username = self.user.text
         password = self.password.text
+        account_type = 'parent'
 
-        if user_exists(username, password):
+
+        if user_exists(username, password, account_type):
             self.manager.current = "parent"
         else:
             # Display an error message to the user if the login fails.
             self.manager.current = "invalid_login"
 
     def create_account_button_click(self, instance):
-        self.manager.current = "account_creation"
+        self.manager.current = "account_creation_parent"
 
 
 class ChildLoginScreen(Screen):
@@ -226,20 +229,22 @@ class ChildLoginScreen(Screen):
         # Same as parent login screen
         username = self.user.text
         password = self.password.text
-        if user_exists(username, password):
+        account_type = 'child'
+
+        if user_exists(username, password, account_type):
             self.manager.current = "child"
         else:
             # Display an error message to the user if the login fails.
             self.manager.current = "invalid_login"
 
     def create_account_button_click(self, instance):
-        self.manager.current = "account_creation"
+        self.manager.current = "account_creation_child"
 
     def return_button_click(self, instance):
         self.manager.current = "login"
 
 
-class AccountCreationScreen(Screen):
+class AccountCreationScreenParent(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.window = GridLayout()
@@ -287,18 +292,89 @@ class AccountCreationScreen(Screen):
         self.window.add_widget(self.return_button)
 
         # Binding button
-        self.create_account.bind(on_press=self.create_account_button_click)
+        self.create_account.bind(on_press=self.create_account_button_click_parent)
         self.return_button.bind(on_press=self.return_button_click)
 
         # Add the GridLayout to the screen
         self.add_widget(self.window)
 
-    def create_account_button_click(self, instance):
+    def create_account_button_click_parent(self, instance):
         username = self.user.text
         password = self.password.text
+        account_type = "parent"
 
         if username and password:
-            insert_user(username, password)
+            insert_user(username, password, account_type)
+            self.manager.current = "login"
+
+        else:
+            # Display an error message to the user if the login fails.
+            self.manager.current = "invalid_acc_creation"
+
+    def return_button_click(self, instance):
+        self.manager.current = "login"
+
+class AccountCreationScreenChild(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = GridLayout()
+        self.window.cols = 1
+        self.window.size_hint = (0.6, 0.7)
+        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
+        self.window.spacing = 30
+
+        self.usertitle = Label(text="Username:",
+                               font_size=20,
+                               color="#FFB6C1"
+                               )
+        self.user = TextInput(multiline=False,
+                              padding_y=(10, 10),
+                              size_hint=(1, 1)
+                              )
+        self.passtitle = Label(text="Password:",
+                               font_size=20,
+                               color="#FFB6C1"
+                               )
+        self.password = TextInput(multiline=False,
+                                  padding_y=(10, 10),
+                                  size_hint=(1, 1)
+                                  )
+        self.create_account = Button(text="Create Account",
+                                     size_hint=(1, None),
+                                     height=40,
+                                     bold=True,
+                                     background_color="#FFB6C1"
+                                     )
+        self.return_button = Button(text="Return to Login",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#FFB6C1"
+                                    )
+        self.error_label = Label(text="", color="#FF0000")
+
+        # Adding widgets to window
+        self.window.add_widget(self.usertitle)
+        self.window.add_widget(self.user)
+        self.window.add_widget(self.passtitle)
+        self.window.add_widget(self.password)
+        self.window.add_widget(self.create_account)
+        self.window.add_widget(self.return_button)
+
+        # Binding button
+        self.create_account.bind(on_press=self.create_account_button_click_child)
+        self.return_button.bind(on_press=self.return_button_click)
+
+        # Add the GridLayout to the screen
+        self.add_widget(self.window)
+
+    def create_account_button_click_child(self, instance):
+        username = self.user.text
+        password = self.password.text
+        account_type = "child"
+
+        if username and password:
+            insert_user(username, password, account_type)
             self.manager.current = "login"
 
         else:
@@ -554,7 +630,8 @@ class MyApp(App):
         login_screen = LoginScreen(name="login")
         parent_login_screen = ParentLoginScreen(name="parent_login")
         child_login_screen = ChildLoginScreen(name="child_login")
-        account_creation_screen = AccountCreationScreen(name="account_creation")
+        account_creation_screen_parent = AccountCreationScreenParent(name="account_creation_parent")
+        account_creation_screen_child = AccountCreationScreenChild(name="account_creation_child")
         parent_screen = ParentScreen(name="parent")
         child_screen = ChildScreen(name="child")
         invalid_login_screen = InvalidLoginScreen(name="invalid_login")
@@ -565,7 +642,8 @@ class MyApp(App):
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
         sm.add_widget(child_login_screen)
-        sm.add_widget(account_creation_screen)
+        sm.add_widget(account_creation_screen_parent)
+        sm.add_widget(account_creation_screen_child)
         sm.add_widget(parent_screen)
         sm.add_widget(child_screen)
         sm.add_widget(invalid_login_screen)
