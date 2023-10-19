@@ -22,15 +22,17 @@ atexit.register(lambda: (conn.commit(), conn.close()))
 
 
 def insert_user(username, password, account_type):
-    cursor.execute("INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)", (username, password, account_type))
+    cursor.execute("INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)",
+                   (username, password, account_type))
 
 
 def user_exists(username, password, account_type):
-    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND account_type = ?", (username, password, account_type))
+    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND account_type = ?",
+                   (username, password, account_type))
     return cursor.fetchone() is not None
 
 
-class LoginScreen(Screen):
+class BaseScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.window = GridLayout()
@@ -38,6 +40,11 @@ class LoginScreen(Screen):
         self.window.size_hint = (0.6, 0.7)
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.window.spacing = 30
+
+
+class LoginScreen(BaseScreen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         # Image
         self.window.add_widget(Image(source="poop.png"))
@@ -82,15 +89,9 @@ class LoginScreen(Screen):
         self.manager.current = "child_login"
 
 
-class ParentLoginScreen(Screen):
+class ParentLoginScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
-
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
@@ -153,7 +154,6 @@ class ParentLoginScreen(Screen):
         password = self.password.text
         account_type = 'parent'
 
-
         if user_exists(username, password, account_type):
             self.manager.current = "parent"
         else:
@@ -164,14 +164,9 @@ class ParentLoginScreen(Screen):
         self.manager.current = "account_creation_parent"
 
 
-class ChildLoginScreen(Screen):
+class ChildLoginScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
@@ -244,14 +239,9 @@ class ChildLoginScreen(Screen):
         self.manager.current = "login"
 
 
-class AccountCreationScreenParent(Screen):
+class AccountCreationScreenParent(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
@@ -314,14 +304,10 @@ class AccountCreationScreenParent(Screen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
-class AccountCreationScreenChild(Screen):
+
+class AccountCreationScreenChild(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
@@ -385,14 +371,9 @@ class AccountCreationScreenChild(Screen):
         self.manager.current = "login"
 
 
-class ParentScreen(Screen):
+class ParentScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.parent_title = Label(text="Welcome, Parent",
                                   font_size=24,
@@ -434,14 +415,9 @@ class ParentScreen(Screen):
         self.manager.current = "login"
 
 
-class ChildScreen(Screen):
+class ChildScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.child_title = Label(text="Welcome, Child",
                                  font_size=24,
@@ -483,14 +459,9 @@ class ChildScreen(Screen):
         self.manager.current = "login"
 
 
-class AssignedTasksScreen(Screen):
+class AssignedTasksScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         # Add widgets for viewing assigned tasks here
         self.tasks_label = Label(text="Assigned Tasks",
@@ -526,14 +497,9 @@ class AssignedTasksScreen(Screen):
         self.manager.current = "parent"
 
 
-class Child_Tasks(Screen):
+class Child_Tasks(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.child_title = Label(text="Test",
                                  font_size=24,
@@ -557,14 +523,9 @@ class Child_Tasks(Screen):
         self.manager.current = "child"
 
 
-class InvalidLoginScreen(Screen):
+class InvalidLoginScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.testtile = Label(text="Invalid Credentials",
                               font_size=20,
@@ -590,14 +551,9 @@ class InvalidLoginScreen(Screen):
         self.manager.current = "login"
 
 
-class InvalidAccCreation(Screen):
+class InvalidAccCreation(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.window = GridLayout()
-        self.window.cols = 1
-        self.window.size_hint = (0.6, 0.7)
-        self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.window.spacing = 30
 
         self.testtile = Label(text="Unable to create account, ensure both fields are filled in.",
                               font_size=20,
