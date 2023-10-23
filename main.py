@@ -51,6 +51,7 @@ class LoginScreen(BaseScreen):
 
         Window.clearcolor = (.90, .90, .90, 1)
         # Image
+        self.window.add_widget(Image(source="poop.png"))
         welcome_button = Label(text="[b]WELCOME TO [NAME]![/b]",
                                font_size=40,
                                color="#0000ff",
