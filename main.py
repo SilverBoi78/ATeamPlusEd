@@ -1,4 +1,7 @@
 import atexit
+from kivy.graphics import Color, Rectangle
+from kivy.graphics.texture import Texture
+from kivy.core.window import Window
 from kivy.app import App
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -46,30 +49,35 @@ class LoginScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        Window.clearcolor = (.90, .90, .90, 1)
         # Image
-        self.window.add_widget(Image(source="poop.png"))
-
+        welcome_button = Label(text="[b]WELCOME TO [NAME]![/b]",
+                               font_size=40,
+                               color="#0000ff",
+                               markup=True
+                               )
         # Buttons
         parent_button = Button(text="Parent",
                                size_hint=(1, None),
                                height=40,
                                bold=True,
-                               background_color="#FFB6C1"
+                               background_color="#0000ff"
                                )
         child_button = Button(text="Child",
                               size_hint=(1, None),
                               height=40,
                               bold=True,
-                              background_color="#FFB6C1"
+                              background_color="#0000ff"
                               )
         exit_button = Button(text="Exit",
                              size_hint=(1, None),
                              height=40,
                              bold=True,
-                             background_color="#FFB6C1"
+                             background_color="#0000ff"
                              )
 
         # Adding buttons to window
+        self.window.add_widget(welcome_button)
         self.window.add_widget(parent_button)
         self.window.add_widget(child_button)
         self.window.add_widget(exit_button)
@@ -95,37 +103,37 @@ class ParentLoginScreen(BaseScreen):
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.user = TextInput(multiline=False,
                               padding_y=(10, 10),
-                              size_hint=(1, 1)
+                              size_hint=(1.5, 1.5)
                               )
         self.passtitle = Label(text="Password:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
-                                  size_hint=(1, 1)
+                                  size_hint=(1.5, 1.5)
                                   )
         self.login = Button(text="Login",
                             size_hint=(1, None),
                             height=40,
                             bold=True,
-                            background_color="#FFB6C1"
+                            background_color="#0000ff"
                             )
         self.create_account = Button(text="Create Account",
                                      size_hint=(1, None),
                                      height=40,
                                      bold=True,
-                                     background_color="#FFB6C1"
+                                     background_color="#0000ff"
                                      )
         self.return_button = Button(text="Return to Menu",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
         self.error_label = Label(text="", color="#FF0000")
 
@@ -170,37 +178,37 @@ class ChildLoginScreen(BaseScreen):
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.user = TextInput(multiline=False,
                               padding_y=(10, 10),
-                              size_hint=(1, 1)
+                              size_hint=(1.5, 1.5)
                               )
         self.passtitle = Label(text="Password:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
-                                  size_hint=(1, 1)
+                                  size_hint=(1.5, 1.5)
                                   )
         self.login = Button(text="Login",
                             size_hint=(1, None),
                             height=40,
                             bold=True,
-                            background_color="#FFB6C1"
+                            background_color="#0000ff"
                             )
         self.create_account = Button(text="Create Account",
                                      size_hint=(1, None),
                                      height=40,
                                      bold=True,
-                                     background_color="#FFB6C1"
+                                     background_color="#0000ff"
                                      )
         self.return_button = Button(text="Return to Menu",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
         self.error_label = Label(text="", color="#FF0000")
 
@@ -245,31 +253,31 @@ class AccountCreationScreenParent(BaseScreen):
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.user = TextInput(multiline=False,
                               padding_y=(10, 10),
-                              size_hint=(1, 1)
+                              size_hint=(1.5, 1.5)
                               )
         self.passtitle = Label(text="Password:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
-                                  size_hint=(1, 1)
+                                  size_hint=(1.5, 1.5)
                                   )
         self.create_account = Button(text="Create Account",
                                      size_hint=(1, None),
                                      height=40,
                                      bold=True,
-                                     background_color="#FFB6C1"
+                                     background_color="#0000ff"
                                      )
         self.return_button = Button(text="Return to Login",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
         self.error_label = Label(text="", color="#FF0000")
 
@@ -311,31 +319,31 @@ class AccountCreationScreenChild(BaseScreen):
 
         self.usertitle = Label(text="Username:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.user = TextInput(multiline=False,
                               padding_y=(10, 10),
-                              size_hint=(1, 1)
+                              size_hint=(1.5, 1.5)
                               )
         self.passtitle = Label(text="Password:",
                                font_size=20,
-                               color="#FFB6C1"
+                               color="#0000ff"
                                )
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
-                                  size_hint=(1, 1)
+                                  size_hint=(1.5, 1.5)
                                   )
         self.create_account = Button(text="Create Account",
                                      size_hint=(1, None),
                                      height=40,
                                      bold=True,
-                                     background_color="#FFB6C1"
+                                     background_color="#0000ff"
                                      )
         self.return_button = Button(text="Return to Login",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
         self.error_label = Label(text="", color="#FF0000")
 
@@ -377,26 +385,26 @@ class ParentScreen(BaseScreen):
 
         self.parent_title = Label(text="Welcome, Parent",
                                   font_size=24,
-                                  color="#FFB6C1"
+                                  color="#0000ff"
                                   )
 
         self.parent_info = Label(text="Dashboard.",
                                  font_size=16,
-                                 color="#FFB6C1"
+                                 color="#0000ff"
                                  )
 
         self.assigned_tasks_button = Button(text="Assigned Tasks",
                                             size_hint=(1, None),
                                             height=40,
                                             bold=True,
-                                            background_color="#FFB6C1"
+                                            background_color="#0000ff"
                                             )
 
         self.logout_button = Button(text="Logout",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
 
         self.window.add_widget(self.parent_title)
@@ -421,26 +429,26 @@ class ChildScreen(BaseScreen):
 
         self.child_title = Label(text="Welcome, Child",
                                  font_size=24,
-                                 color="#FFB6C1"
+                                 color="#0000ff"
                                  )
 
         self.child_info = Label(text="Dashboard.",
                                 font_size=16,
-                                color="#FFB6C1"
+                                color="#0000ff"
                                 )
 
         self.tasks_button = Button(text="List of Tasks",
                                    size_hint=(1, None),
                                    height=40,
                                    bold=True,
-                                   background_color="#FFB6C1"
+                                   background_color="#0000ff"
                                    )
 
         self.logout_button = Button(text="Logout",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
 
         self.window.add_widget(self.child_title)
@@ -466,19 +474,19 @@ class AssignedTasksScreen(BaseScreen):
         # Add widgets for viewing assigned tasks here
         self.tasks_label = Label(text="Assigned Tasks",
                                  font_size=24,
-                                 color="#FFB6C1"
+                                 color="#0000ff"
                                  )
 
         self.tasks_info = Label(text="List of assigned tasks goes here.",
                                 font_size=16,
-                                color="#FFB6C1"
+                                color="#0000ff"
                                 )
 
         self.back_button = Button(text="Back to Parent Dashboard",
                                   size_hint=(1, None),
                                   height=40,
                                   bold=True,
-                                  background_color="#FFB6C1"
+                                  background_color="#0000ff"
                                   )
 
         # Adding widgets to the GridLayout
@@ -503,14 +511,14 @@ class Child_Tasks(BaseScreen):
 
         self.child_title = Label(text="Test",
                                  font_size=24,
-                                 color="#FFB6C1"
+                                 color="#0000ff"
                                  )
 
         self.back_button = Button(text="Back to Parent Dashboard",
                                   size_hint=(1, None),
                                   height=40,
                                   bold=True,
-                                  background_color="#FFB6C1"
+                                  background_color="#0000ff"
                                   )
 
         self.window.add_widget(self.child_title)
@@ -529,13 +537,13 @@ class InvalidLoginScreen(BaseScreen):
 
         self.testtile = Label(text="Invalid Credentials",
                               font_size=20,
-                              color="#FFB6C1"
+                              color="#0000ff"
                               )
         self.return_button = Button(text="Try Again",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
 
         self.window.add_widget(self.testtile)
@@ -557,13 +565,13 @@ class InvalidAccCreation(BaseScreen):
 
         self.testtile = Label(text="Unable to create account, ensure both fields are filled in.",
                               font_size=20,
-                              color="#FFB6C1"
+                              color="#0000ff"
                               )
         self.return_button = Button(text="Return",
                                     size_hint=(1, None),
                                     height=40,
                                     bold=True,
-                                    background_color="#FFB6C1"
+                                    background_color="#0000ff"
                                     )
 
         self.window.add_widget(self.testtile)
