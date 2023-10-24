@@ -1,4 +1,5 @@
 import atexit
+from kivy.properties import StringProperty
 from kivy.graphics import Color, Rectangle
 from kivy.graphics.texture import Texture
 from kivy.core.window import Window
@@ -19,21 +20,26 @@ cursor = conn.cursor()
 
 # Create a table for storing user data if it doesn't exist yet.
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
-cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
 
 
-def insert_task(task_id, task_name, task_desc, task_points, task_due):
-    cursor.execute("INSERT INTO tasks (task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?)",
-                   (task_id, task_name, task_desc, task_points, task_due))
+def insert_task(task_user, task_id, task_name, task_desc, task_points, task_due):
+    cursor.execute("INSERT INTO tasks (task_user, task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?, ?)",
+                   (task_user, task_id, task_name, task_desc, task_points, task_due))
 
 
 def get_tasks():
     cursor.execute("SELECT * FROM tasks")
     return cursor.fetchall()
 
+
+# Get the tasks for a specific user.
+def get_user_tasks(task_user):
+    cursor.execute("SELECT * FROM tasks WHERE task_user = ?", (task_user,))
+    return cursor.fetchall()
 
 def specific_task(task_id):
     cursor.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,))
@@ -59,6 +65,10 @@ def get_task_due(task_id):
     cursor.execute("SELECT task_due FROM tasks WHERE task_id = ?", (task_id,))
     return cursor.fetchone()
 
+
+def check_user_task(task_user):
+    cursor.execute("SELECT * FROM tasks WHERE task_user = ?", (task_user,))
+    return cursor.fetchone()
 
 def insert_user(username, password, account_type):
     cursor.execute("INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)",
@@ -90,6 +100,7 @@ class BaseScreen(Screen):
         self.window.spacing = 30
         # Create a vector that will store the tasks created by a parent.
         self.tasks = []
+        # Place a blank username in the manager so that it can be accessed by all screens.
 
 
 class LoginScreen(BaseScreen):
@@ -211,6 +222,7 @@ class ParentLoginScreen(BaseScreen):
         account_type = 'parent'
 
         if user_exists(username, password, account_type):
+            self.manager.username = username
             self.manager.current = "parent"
         else:
             # Display an error message to the user if the login fails.
@@ -516,10 +528,13 @@ class ChildScreen(BaseScreen):
 
 
 class AssignedTasksScreen(BaseScreen):
+
+    def on_enter(self):
+        username = self.manager.username
+        get_user_tasks(username)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Get the tasks from the database.
-        self.tasks = get_tasks()
 
         # Add widgets for viewing assigned tasks here
         self.tasks_label = Label(text="Assigned Tasks",
@@ -533,14 +548,14 @@ class AssignedTasksScreen(BaseScreen):
                                     bold=True,
                                     background_color="#0000ff"
                                     )
-        # Create a label for each task.
+        # Create a label for each task unique to the user and add it to the window.
         for task in self.tasks:
-            task_id = task[0]
-            task_name = task[1]
-            task_desc = task[2]
-            task_points = task[3]
-            task_due = task[4]
-            task_label = Label(text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due Date: {task_due}",
+            task_id = task[1]
+            task_name = task[2]
+            task_desc = task[3]
+            task_points = task[4]
+            task_due = task[5]
+            task_label = Label(text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due: {task_due}",
                                font_size=16,
                                color="#0000ff"
                                )
@@ -660,7 +675,9 @@ class InvalidAccCreation(BaseScreen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
+
 class Create_Task(BaseScreen):
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -668,10 +685,6 @@ class Create_Task(BaseScreen):
                                  font_size=24,
                                  color="#0000ff"
                                  )
-        self.task_info = Label(text="Create a task.",
-                                font_size=16,
-                                color="#0000ff"
-                                )
         self.task_name = Label(text="Task Name:",
                                font_size=20,
                                color="#0000ff"
@@ -718,7 +731,6 @@ class Create_Task(BaseScreen):
                                     )
 
         self.window.add_widget(self.task_title)
-        self.window.add_widget(self.task_info)
         self.window.add_widget(self.task_name)
         self.window.add_widget(self.task_name_input)
         self.window.add_widget(self.task_desc)
@@ -735,6 +747,7 @@ class Create_Task(BaseScreen):
         self.add_widget(self.window)
 
     def create_task_click(self, instance):
+        task_user = self.manager.username
         task_id = len(self.tasks) + 1
         task_name = self.task_name_input.text
         task_desc = self.task_desc_input.text
@@ -744,7 +757,7 @@ class Create_Task(BaseScreen):
 
         if task_name and task_desc and task_points and task_due:
             # Add the tasks to the task database
-            insert_task(task_id, task_name, task_desc, task_points, task_due)
+            insert_task(task_user, task_id, task_name, task_desc, task_points, task_due)
             self.manager.current = "assigned_tasks"
         else:
             self.manager.current = "invalid_acc_creation"
@@ -753,9 +766,13 @@ class Create_Task(BaseScreen):
         self.manager.current = "assigned_tasks"
 
 
+class MyScreenManager(ScreenManager):
+    username = StringProperty('')
+
+
 class MyApp(App):
     def build(self):
-        sm = ScreenManager()
+        sm = MyScreenManager()
 
         login_screen = LoginScreen(name="login")
         parent_login_screen = ParentLoginScreen(name="parent_login")
