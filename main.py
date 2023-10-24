@@ -19,9 +19,45 @@ cursor = conn.cursor()
 
 # Create a table for storing user data if it doesn't exist yet.
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
+cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
+
+
+def insert_task(task_id, task_name, task_desc, task_points, task_due):
+    cursor.execute("INSERT INTO tasks (task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?)",
+                   (task_id, task_name, task_desc, task_points, task_due))
+
+
+def get_tasks():
+    cursor.execute("SELECT * FROM tasks")
+    return cursor.fetchall()
+
+
+def specific_task(task_id):
+    cursor.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,))
+    return cursor.fetchone()
+
+
+def get_task_name(task_id):
+    cursor.execute("SELECT task_name FROM tasks WHERE task_id = ?", (task_id,))
+    return cursor.fetchone()
+
+
+def get_task_desc(task_id):
+    cursor.execute("SELECT task_desc FROM tasks WHERE task_id = ?", (task_id,))
+    return cursor.fetchone()
+
+
+def get_task_points(task_id):
+    cursor.execute("SELECT task_points FROM tasks WHERE task_id = ?", (task_id,))
+    return cursor.fetchone()
+
+
+def get_task_due(task_id):
+    cursor.execute("SELECT task_due FROM tasks WHERE task_id = ?", (task_id,))
+    return cursor.fetchone()
 
 
 def insert_user(username, password, account_type):
@@ -29,9 +65,18 @@ def insert_user(username, password, account_type):
                    (username, password, account_type))
 
 
+def insert_child(username, password, parent):
+    cursor.execute("INSERT INTO users (username, password, parent) VALUES (?, ?, ?)",
+                   (username, password, parent))
+
+
 def user_exists(username, password, account_type):
     cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND account_type = ?",
                    (username, password, account_type))
+    return cursor.fetchone() is not None
+def child_exists(username, password, parent):
+    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND parent = ?",
+                   (username, password, parent))
     return cursor.fetchone() is not None
 
 
@@ -43,6 +88,8 @@ class BaseScreen(Screen):
         self.window.size_hint = (0.6, 0.7)
         self.window.pos_hint = {"center_x": 0.5, "center_y": 0.5}
         self.window.spacing = 30
+        # Create a vector that will store the tasks created by a parent.
+        self.tasks = []
 
 
 class LoginScreen(BaseScreen):
@@ -52,7 +99,7 @@ class LoginScreen(BaseScreen):
         Window.clearcolor = (.90, .90, .90, 1)
         # Image
         self.window.add_widget(Image(source="poop.png"))
-        welcome_button = Label(text="[b]WELCOME TO [NAME]![/b]",
+        welcome_button = Label(text="[b]WELCOME TO ATeamPlusEd![/b]",
                                font_size=40,
                                color="#0000ff",
                                markup=True
@@ -471,17 +518,41 @@ class ChildScreen(BaseScreen):
 class AssignedTasksScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # Get the tasks from the database.
+        self.tasks = get_tasks()
 
         # Add widgets for viewing assigned tasks here
         self.tasks_label = Label(text="Assigned Tasks",
                                  font_size=24,
                                  color="#0000ff"
                                  )
+        self.window.add_widget(self.tasks_label)
+        self.create_task = Button(text="Create Task",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+        # Create a label for each task.
+        for task in self.tasks:
+            task_id = task[0]
+            task_name = task[1]
+            task_desc = task[2]
+            task_points = task[3]
+            task_due = task[4]
+            task_label = Label(text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due Date: {task_due}",
+                               font_size=16,
+                               color="#0000ff"
+                               )
+            self.window.add_widget(task_label)
 
-        self.tasks_info = Label(text="List of assigned tasks goes here.",
-                                font_size=16,
-                                color="#0000ff"
-                                )
+        if not self.tasks:
+            self.window.add_widget(Label(text="No tasks assigned.",
+                                         font_size=16,
+                                         color="#0000ff"
+                                         ))
+
+
 
         self.back_button = Button(text="Back to Parent Dashboard",
                                   size_hint=(1, None),
@@ -491,12 +562,12 @@ class AssignedTasksScreen(BaseScreen):
                                   )
 
         # Adding widgets to the GridLayout
-        self.window.add_widget(self.tasks_label)
-        self.window.add_widget(self.tasks_info)
+        self.window.add_widget(self.create_task)
         self.window.add_widget(self.back_button)
 
         # Binding the back button to return to the parent screen
         self.back_button.bind(on_press=self.back_button_click)
+        self.create_task.bind(on_press=self.create_task_click)
 
         # Add the GridLayout to the screen
         self.add_widget(self.window)
@@ -505,6 +576,8 @@ class AssignedTasksScreen(BaseScreen):
         # Navigate back to the parent screen
         self.manager.current = "parent"
 
+    def create_task_click(self, instance):
+        self.manager.current = "create_task"
 
 class Child_Tasks(BaseScreen):
     def __init__(self, **kwargs):
@@ -587,6 +660,98 @@ class InvalidAccCreation(BaseScreen):
     def return_button_click(self, instance):
         self.manager.current = "login"
 
+class Create_Task(BaseScreen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.task_title = Label(text="Create Task",
+                                 font_size=24,
+                                 color="#0000ff"
+                                 )
+        self.task_info = Label(text="Create a task.",
+                                font_size=16,
+                                color="#0000ff"
+                                )
+        self.task_name = Label(text="Task Name:",
+                               font_size=20,
+                               color="#0000ff"
+                               )
+        self.task_name_input = TextInput(multiline=False,
+                                padding_y=(10, 10),
+                                size_hint=(1.5, 1.5)
+                                )
+        self.task_desc = Label(text="Task Description:",
+                               font_size=20,
+                               color="#0000ff"
+                               )
+        self.task_desc_input = TextInput(multiline=False,
+                                padding_y=(10, 10),
+                                size_hint=(1.5, 1.5)
+                                )
+        self.task_points = Label(text="Task Points:",
+                                 font_size=20,
+                                 color="#0000ff"
+                                 )
+        self.task_points_input = TextInput(multiline=False,
+                                  padding_y=(10, 10),
+                                  size_hint=(1.5, 1.5)
+                                  )
+        self.task_due = Label(text="Task Due Date:",
+                                    font_size=20,
+                                    color="#0000ff"
+                                    )
+        self.task_due_input = TextInput(multiline=False,
+                                     padding_y=(10, 10),
+                                     size_hint=(1.5, 1.5)
+                                     )
+        self.create_task = Button(text="Create Task",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+        self.back_button = Button(text="Back to Parent Dashboard",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.window.add_widget(self.task_title)
+        self.window.add_widget(self.task_info)
+        self.window.add_widget(self.task_name)
+        self.window.add_widget(self.task_name_input)
+        self.window.add_widget(self.task_desc)
+        self.window.add_widget(self.task_desc_input)
+        self.window.add_widget(self.task_points)
+        self.window.add_widget(self.task_points_input)
+        self.window.add_widget(self.task_due)
+        self.window.add_widget(self.task_due_input)
+        self.window.add_widget(self.create_task)
+        self.window.add_widget(self.back_button)
+
+        self.create_task.bind(on_press=self.create_task_click)
+        self.back_button.bind(on_press=self.back_button_click)
+        self.add_widget(self.window)
+
+    def create_task_click(self, instance):
+        task_id = len(self.tasks) + 1
+        task_name = self.task_name_input.text
+        task_desc = self.task_desc_input.text
+        task_points = self.task_points_input.text
+        task_points = int(task_points)
+        task_due = self.task_due_input.text
+
+        if task_name and task_desc and task_points and task_due:
+            # Add the tasks to the task database
+            insert_task(task_id, task_name, task_desc, task_points, task_due)
+            self.manager.current = "assigned_tasks"
+        else:
+            self.manager.current = "invalid_acc_creation"
+
+    def back_button_click(self, instance):
+        self.manager.current = "assigned_tasks"
+
 
 class MyApp(App):
     def build(self):
@@ -603,6 +768,7 @@ class MyApp(App):
         invalid_acc_creation = InvalidAccCreation(name="invalid_acc_creation")
         assigned_tasks_screen = AssignedTasksScreen(name="assigned_tasks")
         child_tasks = Child_Tasks(name="child_tasks")
+        create_task = Create_Task(name="create_task")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
@@ -615,6 +781,7 @@ class MyApp(App):
         sm.add_widget(invalid_acc_creation)
         sm.add_widget(assigned_tasks_screen)
         sm.add_widget(child_tasks)
+        sm.add_widget(create_task)
 
         return sm
 
