@@ -532,9 +532,18 @@ class AssignedTasksScreen(BaseScreen):
     def on_enter(self):
         username = self.manager.username
         get_user_tasks(username)
+        # Pass the tasks to def __init__ so that they can be displayed.
+        self.tasks = get_user_tasks(username)
+        # Print the tasks to the console for debugging purposes.
+        print(self.tasks)
+        # Call display_tasks to create and add widgets
+        self.display_tasks()
+        # Clear the screen of any widgets from the previous screen.
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.tasks = []
 
         # Add widgets for viewing assigned tasks here
         self.tasks_label = Label(text="Assigned Tasks",
@@ -543,31 +552,11 @@ class AssignedTasksScreen(BaseScreen):
                                  )
         self.window.add_widget(self.tasks_label)
         self.create_task = Button(text="Create Task",
-                                    size_hint=(1, None),
-                                    height=40,
-                                    bold=True,
-                                    background_color="#0000ff"
-                                    )
-        # Create a label for each task unique to the user and add it to the window.
-        for task in self.tasks:
-            task_id = task[1]
-            task_name = task[2]
-            task_desc = task[3]
-            task_points = task[4]
-            task_due = task[5]
-            task_label = Label(text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due: {task_due}",
-                               font_size=16,
-                               color="#0000ff"
-                               )
-            self.window.add_widget(task_label)
-
-        if not self.tasks:
-            self.window.add_widget(Label(text="No tasks assigned.",
-                                         font_size=16,
-                                         color="#0000ff"
-                                         ))
-
-
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#0000ff"
+                                  )
 
         self.back_button = Button(text="Back to Parent Dashboard",
                                   size_hint=(1, None),
@@ -576,10 +565,6 @@ class AssignedTasksScreen(BaseScreen):
                                   background_color="#0000ff"
                                   )
 
-        # Adding widgets to the GridLayout
-        self.window.add_widget(self.create_task)
-        self.window.add_widget(self.back_button)
-
         # Binding the back button to return to the parent screen
         self.back_button.bind(on_press=self.back_button_click)
         self.create_task.bind(on_press=self.create_task_click)
@@ -587,12 +572,61 @@ class AssignedTasksScreen(BaseScreen):
         # Add the GridLayout to the screen
         self.add_widget(self.window)
 
+    def display_tasks(self):
+        # Create a label for each task unique to the user and add it to the window.
+        for task in self.tasks:
+            task_id = task[1]
+            task_name = task[2]
+            task_desc = task[3]
+            task_points = task[4]
+            task_due = task[5]
+
+            task_label = Label(
+                text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due Date: {task_due}",
+                font_size=16,
+                color="#0000ff"
+                )
+            self.window.add_widget(task_label)
+        task_button = Button(text="Add Task",
+                             size_hint=(1, None),
+                             height=40,
+                             bold=True,
+                             background_color="#0000ff"
+                             )
+        task_button.bind(on_press=self.task_button_click)
+        self.window.add_widget(task_button)
+        # Add Back Button
+        return_button = Button(text="Back to Parent Dashboard",
+                                 size_hint=(1, None),
+                                 height=40,
+                                 bold=True,
+                                 background_color="#0000ff"
+                                 )
+        return_button.bind(on_press=self.back_button_click)
+        self.window.add_widget(return_button)
+
+
+    def task_button_click(self, instance):
+        self.window.clear_widgets()
+        self.manager.current = "create_task"
+
+        if not self.tasks:
+            self.window.add_widget(Label(text="No tasks assigned.",
+                                         font_size=16,
+                                         color="#0000ff"
+                                         ))
+
     def back_button_click(self, instance):
+        self.window.clear_widgets()
         # Navigate back to the parent screen
         self.manager.current = "parent"
 
     def create_task_click(self, instance):
         self.manager.current = "create_task"
+
+    def return_button_click(self, instance):
+        self.window.clear_widgets()
+        self.manager.current = "parent"
 
 class Child_Tasks(BaseScreen):
     def __init__(self, **kwargs):
