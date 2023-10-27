@@ -21,6 +21,8 @@ cursor = conn.cursor()
 # Create a table for storing user data if it doesn't exist yet.
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
+cursor.execute("""CREATE TABLE IF NOT EXISTS savings_goals (username TEXT,goal_name TEXT,goal_amount INTEGER)""")
+
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
@@ -78,6 +80,29 @@ def insert_user(username, password, account_type):
 def insert_child(username, password, parent):
     cursor.execute("INSERT INTO users (username, password, parent) VALUES (?, ?, ?)",
                    (username, password, parent))
+
+
+def insert_goal(username, goal_name, goal_amount):
+    cursor.execute("SELECT * FROM savings_goals WHERE username = ? AND goal_name = ?", (username, goal_name))
+    existing_goal = cursor.fetchone()
+
+    if existing_goal:
+        cursor.execute("UPDATE savings_goals SET goal_amount = ? WHERE username = ? AND goal_name = ?",
+                       (goal_amount, username, goal_name))
+    else:
+        cursor.execute("INSERT INTO savings_goals (username, goal_name, goal_amount) VALUES (?, ?, ?)",
+                       (username, goal_name, goal_amount))
+
+    conn.commit()
+
+def get_goals(username):
+    cursor.execute("SELECT goal_amount FROM savings_goals WHERE username = ?", (username,))
+    result = cursor.fetchone()
+    if result:
+        return result[0]  # Return the goal amount
+    else:
+        return None  # Return None if there is no savings goal
+
 
 
 def user_exists(username, password, account_type):
@@ -291,12 +316,16 @@ class ChildLoginScreen(BaseScreen):
         self.add_widget(self.window)
 
     def login_button_click(self, instance):
-        # Same as parent login screen
         username = self.user.text
         password = self.password.text
         account_type = 'child'
 
         if user_exists(username, password, account_type):
+            # Update the username in the ChildScreen and SavingsGoalScreen
+            self.manager.get_screen('child').username = username
+            self.manager.get_screen('savings_goal').username = username
+
+            # Navigate to the ChildScreen
             self.manager.current = "child"
         else:
             # Display an error message to the user if the login fails.
@@ -523,19 +552,29 @@ class SavingsGoalScreen(BaseScreen):
         self.add_widget(self.window)
 
     def set_goal_button_click(self, instance):
-        savings_goal = self.savings_goal_input.text
+        try:
+            savings_goal = float(self.savings_goal_input.text)
+        except ValueError:
+            # Handle the error, e.g., show an error message to the user
+            return
 
+        username = self.manager.get_screen('child').username  # Get the actual username of the logged-in child
+        goal_name = "savings_goals"
+
+        insert_goal(username, goal_name, savings_goal)
 
         child_screen = self.manager.get_screen("child")
         child_screen.update_savings_goal_label(savings_goal)
 
         self.manager.current = "child"
 
+
     def return_button_click(self, instance):
         self.manager.current = "child"
 
 
 class ChildScreen(BaseScreen):
+    username = StringProperty(None)  # Define username as a Kivy property
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -588,6 +627,19 @@ class ChildScreen(BaseScreen):
 
     def tasks_button_click(self, instance):
         self.manager.current = "child_tasks"
+
+    def on_enter(self):
+        # Fetch the username of the logged-in child
+        username = self.username
+
+        # Fetch the savings goal from the database using the username
+        savings_goal = get_goals(username)  # Assume this function is correctly implemented
+
+        # Update the label to display the fetched savings goal
+        if savings_goal:
+            self.savings_goal_label.text = f"Savings Goal: ${savings_goal}"
+        else:
+            self.savings_goal_label.text = "No Savings Goal Set"
 
     def update_savings_goal_label(self, goal):
         self.savings_goal_label.text = f"Savings Goal: ${goal}"
