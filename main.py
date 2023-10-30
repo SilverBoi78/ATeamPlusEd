@@ -498,7 +498,13 @@ class ParentScreen(BaseScreen):
                                     background_color="#0000ff"
                                     )
 
+        self.balance_label = Label(text="Current Balance: $100",
+                                      font_size=16,
+                                      color="#0000ff"
+                                      )
+
         self.window.add_widget(self.parent_title)
+        self.window.add_widget(self.balance_label)
         self.window.add_widget(self.parent_info)
         self.window.add_widget(self.assigned_tasks_button)
         self.window.add_widget(self.logout_button)
@@ -506,6 +512,8 @@ class ParentScreen(BaseScreen):
         self.assigned_tasks_button.bind(on_press=self.assigned_tasks_button_click)
         self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
+
+
 
     def assigned_tasks_button_click(self, instance):
         self.manager.current = "assigned_tasks"
