@@ -604,6 +604,12 @@ class ChildScreen(BaseScreen):
                                           bold=True,
                                           background_color="#0000ff"
                                           )
+        self.reward_button = Button(text="Reward",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
 
         self.logout_button = Button(text="Logout",
                                     size_hint=(1, None),
@@ -617,13 +623,17 @@ class ChildScreen(BaseScreen):
         self.window.add_widget(self.child_info)
         self.window.add_widget(self.tasks_button)
         self.window.add_widget(self.savings_goal_button)
+        self.window.add_widget(self.reward_button)
         self.window.add_widget(self.logout_button)
 
         self.tasks_button.bind(on_press=self.tasks_button_click)
         self.savings_goal_button.bind(on_press=self.savings_goal_button_click)
+        self.reward_button.bind(on_press=self.reward_button_click)
         self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
 
+    def reward_button_click(self, instance):
+        self.manager.current = "reward"
     def tasks_button_click(self, instance):
         self.manager.current = "child_tasks"
 
@@ -923,6 +933,36 @@ class Create_Task(BaseScreen):
     def back_button_click(self, instance):
         self.manager.current = "assigned_tasks"
 
+class RewardScreen(BaseScreen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.reward_title = Label(text="Rewards",
+                                  font_size=24,
+                                  color="#0000ff"
+                                  )
+
+        self.reward_info = Label(text="Dashboard.",
+                                 font_size=16,
+                                 color="#0000ff"
+                                 )
+
+        self.logout_button = Button(text="Logout",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.window.add_widget(self.reward_title)
+        self.window.add_widget(self.reward_info)
+        self.window.add_widget(self.logout_button)
+
+        self.logout_button.bind(on_press=self.logout_button_click)
+        self.add_widget(self.window)
+
+    def logout_button_click(self, instance):
+        self.manager.current = "login"
 
 class MyScreenManager(ScreenManager):
     username = StringProperty('')
@@ -932,6 +972,7 @@ class MyApp(App):
     def build(self):
         sm = MyScreenManager()
 
+        reward_screen = RewardScreen(name="reward")
         login_screen = LoginScreen(name="login")
         parent_login_screen = ParentLoginScreen(name="parent_login")
         child_login_screen = ChildLoginScreen(name="child_login")
@@ -957,6 +998,7 @@ class MyApp(App):
         sm.add_widget(assigned_tasks_screen)
         sm.add_widget(child_tasks)
         sm.add_widget(create_task)
+        sm.add_widget(reward_screen)
         sm.add_widget(SavingsGoalScreen(name="savings_goal"))
 
         return sm
