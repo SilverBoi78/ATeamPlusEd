@@ -22,6 +22,10 @@ cursor = conn.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
 cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
 cursor.execute("""CREATE TABLE IF NOT EXISTS savings_goals (username TEXT,goal_name TEXT,goal_amount INTEGER)""")
+# Create a table for the child tasks, made from the parent.
+cursor.execute("CREATE TABLE IF NOT EXISTS child_tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
+# Create a table for the rewards, made from the parent.
+cursor.execute("CREATE TABLE IF NOT EXISTS rewards (reward_user TEXT, reward_id INTEGER, reward_name TEXT, reward_desc TEXT, reward_points INTEGER)")
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
@@ -30,6 +34,30 @@ atexit.register(lambda: (conn.commit(), conn.close()))
 def insert_task(task_user, task_id, task_name, task_desc, task_points, task_due):
     cursor.execute("INSERT INTO tasks (task_user, task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?, ?)",
                    (task_user, task_id, task_name, task_desc, task_points, task_due))
+
+def push_task_to_child(task_user, task_id, task_name, task_desc, task_points, task_due):
+    cursor.execute("INSERT INTO child_tasks (task_user, task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?, ?)",
+                   (task_user, task_id, task_name, task_desc, task_points, task_due))
+
+def insert_reward(reward_user, reward_id, reward_name, reward_desc, reward_points):
+    cursor.execute("INSERT INTO rewards (reward_user, reward_id, reward_name, reward_desc, reward_points) VALUES (?, ?, ?, ?, ?)",
+                   (reward_user, reward_id, reward_name, reward_desc, reward_points))
+
+def get_rewards():
+    cursor.execute("SELECT * FROM rewards")
+    return cursor.fetchall()
+
+def get_child_tasks():
+    cursor.execute("SELECT * FROM child_tasks")
+    return cursor.fetchall()
+
+def get_child_tasks_user(task_user):
+    cursor.execute("SELECT * FROM child_tasks WHERE task_user = ?", (task_user,))
+    return cursor.fetchall()
+
+def assign_parent_to_child(parent, child):
+    cursor.execute("UPDATE users SET parent = ? WHERE username = ?", (parent, child))
+    conn.commit()
 
 
 def get_tasks():
@@ -490,6 +518,19 @@ class ParentScreen(BaseScreen):
                                             bold=True,
                                             background_color="#0000ff"
                                             )
+        self.add_reward_button = Button(text="Add Reward",
+                                        size_hint=(1, None),
+                                        height=40,
+                                        bold=True,
+                                        background_color="#0000ff"
+                                        )
+
+        self.link_child_button = Button(text="Link Child",
+                                        size_hint=(1, None),
+                                        height=40,
+                                        bold=True,
+                                        background_color="#0000ff"
+                                        )
 
         self.logout_button = Button(text="Logout",
                                     size_hint=(1, None),
@@ -501,12 +542,21 @@ class ParentScreen(BaseScreen):
         self.window.add_widget(self.parent_title)
         self.window.add_widget(self.parent_info)
         self.window.add_widget(self.assigned_tasks_button)
+        self.window.add_widget(self.add_reward_button)
+        self.window.add_widget(self.link_child_button)
         self.window.add_widget(self.logout_button)
 
+        self.add_reward_button.bind(on_press=self.add_reward_button_click)
         self.assigned_tasks_button.bind(on_press=self.assigned_tasks_button_click)
+        self.link_child_button.bind(on_press=self.link_child_button_click)
         self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
 
+    def add_reward_button_click(self, instance):
+        self.manager.current = "add_reward"
+
+    def link_child_button_click(self, instance):
+        self.manager.current = "link_child"
     def assigned_tasks_button_click(self, instance):
         self.manager.current = "assigned_tasks"
 
@@ -763,6 +813,22 @@ class AssignedTasksScreen(BaseScreen):
         self.manager.current = "parent"
 
 class Child_Tasks(BaseScreen):
+    def on_enter(self):
+        parent_user = self.manager.parent_user
+        get_user_tasks(parent_user)
+
+        # Pass the tasks to def __init__ so that they can be displayed.
+        self.tasks = get_user_tasks(parent_user)
+        # Print the tasks to the console for debugging purposes.
+        print(self.tasks)
+        # Call display_tasks to create and add widgets if not empty
+        if self.tasks:
+            self.display_tasks()
+        else:
+            self.window.add_widget(Label(text="No tasks assigned.",
+                                         font_size=16,
+                                         color="#0000ff"
+                                         ))
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -934,6 +1000,53 @@ class Create_Task(BaseScreen):
         self.manager.current = "assigned_tasks"
 
 class RewardScreen(BaseScreen):
+
+    def on_enter(self):
+        if self.manager and hasattr(self.manager, 'username'):
+            parent = self.manager.username
+            get_rewards(parent)
+        else:
+            print("Manager not properly set or does not have a username.")
+        self.rewards = get_rewards(parent)
+        print(self.rewards)
+        if self.rewards:
+            self.display_rewards()
+        else:
+            self.window.add_widget(Label(text="No rewards assigned.",
+                                         font_size=16,
+                                         color="#0000ff"
+                                         ))
+
+    def display_rewards(self):
+        for reward in self.rewards:
+            reward_id = reward[1]
+            reward_name = reward[2]
+            reward_points = reward[3]
+
+            reward_label = Label(
+                text=f"Reward ID: {reward_id}\nReward Name: {reward_name}\nReward Points: {reward_points}",
+                font_size=16,
+                color="#0000ff"
+                )
+            self.window.add_widget(reward_label)
+        reward_button = Button(text="Add Reward",
+                             size_hint=(1, None),
+                             height=40,
+                             bold=True,
+                             background_color="#0000ff"
+                             )
+        reward_button.bind(on_press=self.reward_button_click)
+        self.window.add_widget(reward_button)
+        # Add Back Button
+        return_button = Button(text="Back to Parent Dashboard",
+                                 size_hint=(1, None),
+                                 height=40,
+                                 bold=True,
+                                 background_color="#0000ff"
+                                 )
+        return_button.bind(on_press=self.back_button_click)
+        self.window.add_widget(return_button)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -954,6 +1067,11 @@ class RewardScreen(BaseScreen):
                                     background_color="#0000ff"
                                     )
 
+        # Get tasks from the database
+        self.rewards = get_rewards(self.manager.username)
+        # Display the tasks on the screen
+        self.display_rewards()
+
         self.window.add_widget(self.reward_title)
         self.window.add_widget(self.reward_info)
         self.window.add_widget(self.logout_button)
@@ -966,7 +1084,138 @@ class RewardScreen(BaseScreen):
 
 class MyScreenManager(ScreenManager):
     username = StringProperty('')
+    parent = StringProperty('')
 
+class AddReward(BaseScreen):
+    def __init__(self):
+        super().__init__()
+
+        self.reward_title = Label(text="Add Reward",
+                                  font_size=24,
+                                  color="#0000ff"
+                                  )
+        self.reward_name = Label(text="Reward Name:",
+                                 font_size=20,
+                                 color="#0000ff"
+                                 )
+        self.reward_name_input = TextInput(multiline=False,
+                                           padding_y=(10, 10),
+                                           size_hint=(1.5, 1.5)
+                                           )
+        self.reward_points = Label(text="Reward Points:",
+                                   font_size=20,
+                                   color="#0000ff"
+                                   )
+        self.reward_points_input = TextInput(multiline=False,
+                                             padding_y=(10, 10),
+                                             size_hint=(1.5, 1.5)
+                                             )
+        self.reward_button = Button(text="Add Reward",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.return_button = Button(text="Logout",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.window.add_widget(self.reward_title)
+        self.window.add_widget(self.reward_name)
+        self.window.add_widget(self.reward_name_input)
+        self.window.add_widget(self.reward_points)
+        self.window.add_widget(self.reward_points_input)
+        self.window.add_widget(self.reward_button)
+        self.window.add_widget(self.return_button)
+
+        self.reward_button.bind(on_press=self.reward_button_click)
+        self.return_button.bind(on_press=self.logout_button_click)
+        self.add_widget(self.window)
+
+    def reward_button_click(self, instance):
+        reward_name = self.reward_name_input.text
+        reward_points = self.reward_points_input.text
+        reward_points = int(reward_points)
+        reward_user = self.manager.username
+
+        if reward_name and reward_points:
+            insert_reward(reward_user, reward_name, reward_points)
+            self.manager.current = "reward"
+        else:
+            self.manager.current = "invalid_acc_creation"
+
+    def return_button_click(self, instance):
+        self.manager.current = "parent"
+class LinkChild(BaseScreen):
+    def __init__(self):
+        super().__init__()
+
+        self.link_title = Label(text="Link Child",
+                                font_size=24,
+                                color="#0000ff"
+                                )
+        self.child_username = Label(text="Child Username:",
+                                    font_size=20,
+                                    color="#0000ff"
+                                    )
+        self.child_username_input = TextInput(multiline=False,
+                                                padding_y=(10, 10),
+                                                size_hint=(1.5, 1.5)
+                                                )
+        self.child_password = Label(text="Child Password:",
+                                    font_size=20,
+                                    color="#0000ff"
+                                    )
+        self.child_password_input = TextInput(multiline=False,
+                                                padding_y=(10, 10),
+                                                size_hint=(1.5, 1.5)
+                                                )
+
+        self.link_button = Button(text="Link Child",
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#0000ff"
+                                  )
+
+        self.logout_button = Button(text="Logout",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.window.add_widget(self.link_title)
+        self.window.add_widget(self.child_username)
+        self.window.add_widget(self.child_username_input)
+        self.window.add_widget(self.child_password)
+        self.window.add_widget(self.child_password_input)
+        self.window.add_widget(self.link_button)
+        self.window.add_widget(self.logout_button)
+
+        self.link_button.bind(on_press=self.link_button_click)
+        self.logout_button.bind(on_press=self.logout_button_click)
+        self.add_widget(self.window)
+
+        def link_button_click(self, instance):
+            child_username = self.child_username_input.text
+            child_password = self.child_password_input.text
+            account_type = 'child'
+
+            if user_exists(child_username, child_password, account_type):
+                # Update the username in the ChildScreen and SavingsGoalScreen
+                self.manager.get_screen('child').username = child_username
+                self.manager.get_screen('savings_goal').username = child_username
+
+                # Navigate to the ChildScreen
+                self.manager.current = "child"
+            else:
+                # Display an error message to the user if the login fails.
+                self.manager.current = "invalid_login"
 
 class MyApp(App):
     def build(self):
@@ -985,7 +1234,11 @@ class MyApp(App):
         assigned_tasks_screen = AssignedTasksScreen(name="assigned_tasks")
         child_tasks = Child_Tasks(name="child_tasks")
         create_task = Create_Task(name="create_task")
+        link_child = LinkChild(name="link_child")
+        add_reward = AddReward(name="add_reward")
 
+        sm.add_widget(add_reward)
+        sm.add_widget(link_child)
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
         sm.add_widget(child_login_screen)
