@@ -20,16 +20,19 @@ cursor = conn.cursor()
 
 # Create a table for storing user data if it doesn't exist yet.
 cursor.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT, account_type TEXT)")
-cursor.execute("CREATE TABLE IF NOT EXISTS tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
+cursor.execute(
+    "CREATE TABLE IF NOT EXISTS tasks (task_user TEXT, task_id INTEGER, task_name TEXT, task_desc TEXT, task_points INTEGER, task_due TEXT)")
 cursor.execute("""CREATE TABLE IF NOT EXISTS savings_goals (username TEXT,goal_name TEXT,goal_amount INTEGER)""")
+cursor.execute("""CREATE TABLE IF NOT EXISTS balance (username TEXT,balance INTEGER)""")
 
 # Commit the changes and close the connection when the app exits.
 atexit.register(lambda: (conn.commit(), conn.close()))
 
 
 def insert_task(task_user, task_id, task_name, task_desc, task_points, task_due):
-    cursor.execute("INSERT INTO tasks (task_user, task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?, ?)",
-                   (task_user, task_id, task_name, task_desc, task_points, task_due))
+    cursor.execute(
+        "INSERT INTO tasks (task_user, task_id, task_name, task_desc, task_points, task_due) VALUES (?, ?, ?, ?, ?, ?)",
+        (task_user, task_id, task_name, task_desc, task_points, task_due))
 
 
 def get_tasks():
@@ -41,6 +44,7 @@ def get_tasks():
 def get_user_tasks(task_user):
     cursor.execute("SELECT * FROM tasks WHERE task_user = ?", (task_user,))
     return cursor.fetchall()
+
 
 def specific_task(task_id):
     cursor.execute("SELECT * FROM tasks WHERE task_id = ?", (task_id,))
@@ -71,6 +75,7 @@ def check_user_task(task_user):
     cursor.execute("SELECT * FROM tasks WHERE task_user = ?", (task_user,))
     return cursor.fetchone()
 
+
 def insert_user(username, password, account_type):
     cursor.execute("INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)",
                    (username, password, account_type))
@@ -94,6 +99,7 @@ def insert_goal(username, goal_name, goal_amount):
 
     conn.commit()
 
+
 def get_goals(username):
     cursor.execute("SELECT goal_amount FROM savings_goals WHERE username = ?", (username,))
     result = cursor.fetchone()
@@ -103,11 +109,12 @@ def get_goals(username):
         return None  # Return None if there is no savings goal
 
 
-
 def user_exists(username, password, account_type):
     cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND account_type = ?",
                    (username, password, account_type))
     return cursor.fetchone() is not None
+
+
 def child_exists(username, password, parent):
     cursor.execute("SELECT * FROM users WHERE username = ? AND password = ? AND parent = ?",
                    (username, password, parent))
@@ -199,7 +206,7 @@ class ParentLoginScreen(BaseScreen):
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
                                   size_hint=(1.5, 1.5),
-                                  password = True
+                                  password=True
                                   )
         self.login = Button(text="Login",
                             size_hint=(1, None),
@@ -276,7 +283,7 @@ class ChildLoginScreen(BaseScreen):
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
                                   size_hint=(1.5, 1.5),
-                                  password = True
+                                  password=True
                                   )
         self.login = Button(text="Login",
                             size_hint=(1, None),
@@ -356,7 +363,7 @@ class AccountCreationScreenParent(BaseScreen):
         self.password = TextInput(multiline=False,
                                   padding_y=(10, 10),
                                   size_hint=(1.5, 1.5),
-                                  password = True
+                                  password=True
                                   )
         self.create_account = Button(text="Create Account",
                                      size_hint=(1, None),
@@ -499,27 +506,89 @@ class ParentScreen(BaseScreen):
                                     )
 
         self.balance_label = Label(text="Current Balance: $100",
-                                      font_size=16,
-                                      color="#0000ff"
-                                      )
+                                   font_size=16,
+                                   color="#0000ff"
+                                   )
+
+        # create a button that transfers screens to the balance editting screen
+        self.balance_edit_button = Button(text="Edit Balance",
+                                          size_hint=(1, None),
+                                          height=40,
+                                          bold=True,
+                                          background_color="#0000ff"
+                                          )
 
         self.window.add_widget(self.parent_title)
         self.window.add_widget(self.balance_label)
+        self.window.add_widget(self.balance_edit_button)
         self.window.add_widget(self.parent_info)
         self.window.add_widget(self.assigned_tasks_button)
         self.window.add_widget(self.logout_button)
 
+        self.balance_edit_button.bind(on_press=self.balance_edit_button_click)
         self.assigned_tasks_button.bind(on_press=self.assigned_tasks_button_click)
         self.logout_button.bind(on_press=self.logout_button_click)
         self.add_widget(self.window)
 
-
+    def balance_edit_button_click(self, instance):
+        self.manager.current = "balance_edit"
 
     def assigned_tasks_button_click(self, instance):
         self.manager.current = "assigned_tasks"
 
     def logout_button_click(self, instance):
         self.manager.current = "login"
+
+
+# create a balance editting screen that will allow the parent to modify the balance label on the parent screen
+class BalanceEditScreen(BaseScreen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.balance_title = Label(text="Edit Balance",
+                                   font_size=24,
+                                   color="#0000ff"
+                                   )
+
+        self.balance_input = TextInput(multiline=False,
+                                       padding_y=(5, 5),
+                                       size_hint=(1.0, .15)
+                                       )
+
+        self.set_balance_button = Button(text="Set Balance",
+                                         size_hint=(1, None),
+                                         height=40,
+                                         bold=True,
+                                         background_color="#0000ff"
+                                         )
+
+        self.return_button = Button(text="Return to Dashboard",
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
+
+        self.window.add_widget(self.balance_title)
+        self.window.add_widget(self.balance_input)
+        self.window.add_widget(self.set_balance_button)
+        self.window.add_widget(self.return_button)
+
+        self.set_balance_button.bind(on_press=self.set_balance_button_click)
+        self.return_button.bind(on_press=self.return_button_click)
+        self.add_widget(self.window)
+
+    def set_balance_button_click(self, instance):
+        try:
+            balance = float(self.balance_input.text)
+        except ValueError:
+            # Handle the error, e.g., show an error message to the user
+            return
+
+        username = self.manager.get_screen('parent').username  # Get the actual username of the logged-in parent
+
+    def return_button_click(self, instance):
+        self.manager.current = "parent"
 
 class SavingsGoalScreen(BaseScreen):
     def __init__(self, **kwargs):
@@ -531,9 +600,9 @@ class SavingsGoalScreen(BaseScreen):
                                         )
 
         self.savings_goal_input = TextInput(multiline=False,
-                                           padding_y=(5, 5),
-                                           size_hint=(1.0, .15)
-                                           )
+                                            padding_y=(5, 5),
+                                            size_hint=(1.0, .15)
+                                            )
 
         self.set_goal_button = Button(text="Set Goal",
                                       size_hint=(1, None),
@@ -543,11 +612,11 @@ class SavingsGoalScreen(BaseScreen):
                                       )
 
         self.return_button = Button(text="Return to Dashboard",
-                                   size_hint=(1, None),
-                                   height=40,
-                                   bold=True,
-                                   background_color="#0000ff"
-                                   )
+                                    size_hint=(1, None),
+                                    height=40,
+                                    bold=True,
+                                    background_color="#0000ff"
+                                    )
 
         self.window.add_widget(self.savings_goal_label)
         self.window.add_widget(self.savings_goal_input)
@@ -575,13 +644,13 @@ class SavingsGoalScreen(BaseScreen):
 
         self.manager.current = "child"
 
-
     def return_button_click(self, instance):
         self.manager.current = "child"
 
 
 class ChildScreen(BaseScreen):
     username = StringProperty(None)  # Define username as a Kivy property
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -589,11 +658,11 @@ class ChildScreen(BaseScreen):
                                  font_size=24,
                                  color="#0000ff"
                                  )
-        
-        self.savings_goal_label = Label(text="", 
-                                       font_size=16,
-                                       color="#0000ff"
-                                       )
+
+        self.savings_goal_label = Label(text="",
+                                        font_size=16,
+                                        color="#0000ff"
+                                        )
 
         self.child_info = Label(text="Dashboard.",
                                 font_size=16,
@@ -627,7 +696,7 @@ class ChildScreen(BaseScreen):
                                     )
 
         self.window.add_widget(self.child_title)
-        self.window.add_widget(self.savings_goal_label) 
+        self.window.add_widget(self.savings_goal_label)
         self.window.add_widget(self.child_info)
         self.window.add_widget(self.tasks_button)
         self.window.add_widget(self.savings_goal_button)
@@ -642,6 +711,7 @@ class ChildScreen(BaseScreen):
 
     def reward_button_click(self, instance):
         self.manager.current = "reward"
+
     def tasks_button_click(self, instance):
         self.manager.current = "child_tasks"
 
@@ -660,7 +730,7 @@ class ChildScreen(BaseScreen):
 
     def update_savings_goal_label(self, goal):
         self.savings_goal_label.text = f"Savings Goal: ${goal}"
-        
+
     def savings_goal_button_click(self, instance):
         self.manager.current = "savings_goal"
 
@@ -727,7 +797,7 @@ class AssignedTasksScreen(BaseScreen):
                 text=f"Task ID: {task_id}\nTask Name: {task_name}\nTask Description: {task_desc}\nTask Points: {task_points}\nTask Due Date: {task_due}",
                 font_size=16,
                 color="#0000ff"
-                )
+            )
             self.window.add_widget(task_label)
         task_button = Button(text="Add Task",
                              size_hint=(1, None),
@@ -739,14 +809,13 @@ class AssignedTasksScreen(BaseScreen):
         self.window.add_widget(task_button)
         # Add Back Button
         return_button = Button(text="Back to Parent Dashboard",
-                                 size_hint=(1, None),
-                                 height=40,
-                                 bold=True,
-                                 background_color="#0000ff"
-                                 )
+                               size_hint=(1, None),
+                               height=40,
+                               bold=True,
+                               background_color="#0000ff"
+                               )
         return_button.bind(on_press=self.back_button_click)
         self.window.add_widget(return_button)
-
 
     def task_button_click(self, instance):
         self.window.clear_widgets()
@@ -769,6 +838,7 @@ class AssignedTasksScreen(BaseScreen):
     def return_button_click(self, instance):
         self.window.clear_widgets()
         self.manager.current = "parent"
+
 
 class Child_Tasks(BaseScreen):
     def __init__(self, **kwargs):
@@ -858,53 +928,53 @@ class Create_Task(BaseScreen):
         super().__init__(**kwargs)
 
         self.task_title = Label(text="Create Task",
-                                 font_size=24,
-                                 color="#0000ff"
-                                 )
+                                font_size=24,
+                                color="#0000ff"
+                                )
         self.task_name = Label(text="Task Name:",
                                font_size=20,
                                color="#0000ff"
                                )
         self.task_name_input = TextInput(multiline=False,
-                                padding_y=(10, 10),
-                                size_hint=(1.5, 1.5)
-                                )
+                                         padding_y=(10, 10),
+                                         size_hint=(1.5, 1.5)
+                                         )
         self.task_desc = Label(text="Task Description:",
                                font_size=20,
                                color="#0000ff"
                                )
         self.task_desc_input = TextInput(multiline=False,
-                                padding_y=(10, 10),
-                                size_hint=(1.5, 1.5)
-                                )
+                                         padding_y=(10, 10),
+                                         size_hint=(1.5, 1.5)
+                                         )
         self.task_points = Label(text="Task Points:",
                                  font_size=20,
                                  color="#0000ff"
                                  )
         self.task_points_input = TextInput(multiline=False,
-                                  padding_y=(10, 10),
-                                  size_hint=(1.5, 1.5)
-                                  )
+                                           padding_y=(10, 10),
+                                           size_hint=(1.5, 1.5)
+                                           )
         self.task_due = Label(text="Task Due Date:",
-                                    font_size=20,
-                                    color="#0000ff"
-                                    )
+                              font_size=20,
+                              color="#0000ff"
+                              )
         self.task_due_input = TextInput(multiline=False,
-                                     padding_y=(10, 10),
-                                     size_hint=(1.5, 1.5)
-                                     )
+                                        padding_y=(10, 10),
+                                        size_hint=(1.5, 1.5)
+                                        )
         self.create_task = Button(text="Create Task",
-                                    size_hint=(1, None),
-                                    height=40,
-                                    bold=True,
-                                    background_color="#0000ff"
-                                    )
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#0000ff"
+                                  )
         self.back_button = Button(text="Back to Parent Dashboard",
-                                    size_hint=(1, None),
-                                    height=40,
-                                    bold=True,
-                                    background_color="#0000ff"
-                                    )
+                                  size_hint=(1, None),
+                                  height=40,
+                                  bold=True,
+                                  background_color="#0000ff"
+                                  )
 
         self.window.add_widget(self.task_title)
         self.window.add_widget(self.task_name)
@@ -941,6 +1011,7 @@ class Create_Task(BaseScreen):
     def back_button_click(self, instance):
         self.manager.current = "assigned_tasks"
 
+
 class RewardScreen(BaseScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -972,6 +1043,7 @@ class RewardScreen(BaseScreen):
     def logout_button_click(self, instance):
         self.manager.current = "login"
 
+
 class MyScreenManager(ScreenManager):
     username = StringProperty('')
 
@@ -993,6 +1065,7 @@ class MyApp(App):
         assigned_tasks_screen = AssignedTasksScreen(name="assigned_tasks")
         child_tasks = Child_Tasks(name="child_tasks")
         create_task = Create_Task(name="create_task")
+        balance_edit = BalanceEditScreen(name="balance_edit")
 
         sm.add_widget(login_screen)
         sm.add_widget(parent_login_screen)
@@ -1008,10 +1081,10 @@ class MyApp(App):
         sm.add_widget(create_task)
         sm.add_widget(reward_screen)
         sm.add_widget(SavingsGoalScreen(name="savings_goal"))
+        sm.add_widget(balance_edit)
 
         return sm
 
 
 if __name__ == '__main__':
     MyApp().run()
-
