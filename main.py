@@ -12,6 +12,9 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.progressbar import ProgressBar
+from kivy.properties import NumericProperty
+
 import sqlite3
 
 # Add this line after your imports to create a database connection.
@@ -571,16 +574,131 @@ class SavingsGoalScreen(BaseScreen):
     def return_button_click(self, instance):
         self.manager.current = "child"
 
+balance = 0.0
+class BalanceUpdateScreen(BaseScreen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.balance_label = Label(text="Balance Update",
+                                   font_size=24,
+                                   color="#0000ff"
+                                   )
+
+        self.balance_input = TextInput(multiline=False,
+                                      padding_y=(10, 10),
+                                      size_hint=(1.5, 1.5)
+                                      )
+
+        self.set_balance_button = Button(text="Set Balance",
+                                         size_hint=(1, None),
+                                         height=40,
+                                         bold=True,
+                                         background_color="#0000ff"
+                                         )
+
+        self.add_to_balance_button = Button(text="Add to Balance",
+                                          size_hint=(1, None),
+                                          height=40,
+                                          bold=True,
+                                          background_color="#00ff00"
+                                          )
+
+        self.subtract_from_balance_button = Button(text="Subtract from Balance",
+                                                 size_hint=(1, None),
+                                                 height=40,
+                                                 bold=True,
+                                                 background_color="#ff0000"
+                                                 )
+
+        self.return_button = Button(text="Return to Dashboard",
+                                   size_hint=(1, None),
+                                   height=40,
+                                   bold=True,
+                                   background_color="#0000ff"
+                                   )
+
+        self.window.add_widget(self.balance_label)
+        self.window.add_widget(self.balance_input)
+        self.window.add_widget(self.set_balance_button)
+        self.window.add_widget(self.add_to_balance_button)
+        self.window.add_widget(self.subtract_from_balance_button)
+        self.window.add_widget(self.return_button)
+
+
+        self.set_balance_button.bind(on_press=self.set_balance_button_click)  # Bind the new button
+        self.add_to_balance_button.bind(on_press=self.add_to_balance_button_click)
+        self.subtract_from_balance_button.bind(on_press=self.subtract_from_balance_button_click)
+        self.return_button.bind(on_press=self.return_button_click)
+        self.add_widget(self.window)
+
+    def add_to_balance_button_click(self, instance):
+        # Get the amount to add from the child's input
+        amount = float(self.balance_input.text)
+
+        # Update the balance (store it in a database or another storage mechanism)
+        # For example, if balance is stored in a variable:
+        global balance
+        balance += amount
+
+        # Call the update_balance_label method to update the displayed balance
+        child_screen = self.manager.get_screen("child")
+        child_screen.update_balance_label(balance)
+
+        # Navigate back to the child's dashboard screen
+        self.manager.current = "child"
+
+    def set_balance_button_click(self, instance):
+        # Get the amount to add from the child's input
+        new_balance = float(self.balance_input.text)
+
+        # Update the balance (store it in a database or another storage mechanism)
+        # For example, if balance is stored in a variable:
+        global balance
+        balance = new_balance
+
+        # Call the update_balance_label method to update the displayed balance
+        child_screen = self.manager.get_screen("child")
+        child_screen.update_balance_label(balance)
+
+        # Navigate back to the child's dashboard screen
+        self.manager.current = "child"
+        
+    def subtract_from_balance_button_click(self, instance):
+        # Get the amount to subtract from the child's input
+        amount = float(self.balance_input.text)
+
+        # Update the balance (store it in a database or another storage mechanism)
+        # For example, if balance is stored in a variable:
+        global balance
+        balance -= amount
+
+        # Call the update_balance_label method to update the displayed balance
+        child_screen = self.manager.get_screen("child")
+        child_screen.update_balance_label(balance)
+
+        # Navigate back to the child's dashboard screen
+        self.manager.current = "child"
+
+    def return_button_click(self, instance):
+        self.manager.current = "child"
 
 class ChildScreen(BaseScreen):
     username = StringProperty(None)  # Define username as a Kivy property
-    def __init__(self, **kwargs):
+    def __init__(self,savings_goal = 0, **kwargs):
         super().__init__(**kwargs)
 
         self.child_title = Label(text="Welcome, Child",
                                  font_size=24,
                                  color="#0000ff"
                                  )
+
+
+        self.balance_label = Label(text="Balance: $0.00",  # Initialize with a default balance
+                                   font_size=16,
+                                   color="#0000ff"
+                                   )    
+        
+        self.progress_bar = ProgressBar()
         
         self.savings_goal_label = Label(text="", 
                                        font_size=16,
@@ -605,6 +723,13 @@ class ChildScreen(BaseScreen):
                                           background_color="#0000ff"
                                           )
 
+        self.balance_update_button = Button(text="Update Balance",
+                                            size_hint=(1, None),
+                                            height=40,
+                                            bold=True,
+                                            background_color="#0000ff"
+                                            )
+
         self.logout_button = Button(text="Logout",
                                     size_hint=(1, None),
                                     height=40,
@@ -618,10 +743,16 @@ class ChildScreen(BaseScreen):
         self.window.add_widget(self.tasks_button)
         self.window.add_widget(self.savings_goal_button)
         self.window.add_widget(self.logout_button)
+        self.window.add_widget(self.balance_label)  # Add the balance label
+        self.window.add_widget(self.balance_update_button)
+        self.window.add_widget(self.progress_bar)  # Add the ProgressBar
+
 
         self.tasks_button.bind(on_press=self.tasks_button_click)
         self.savings_goal_button.bind(on_press=self.savings_goal_button_click)
         self.logout_button.bind(on_press=self.logout_button_click)
+        self.balance_update_button.bind(on_press=self.balance_update_button_click)
+        
         self.add_widget(self.window)
 
     def tasks_button_click(self, instance):
@@ -633,10 +764,12 @@ class ChildScreen(BaseScreen):
 
         # Fetch the savings goal from the database using the username
         savings_goal = get_goals(username)  # Assume this function is correctly implemented
-
         # Update the label to display the fetched savings goal
         if savings_goal:
             self.savings_goal_label.text = f"Savings Goal: ${savings_goal}"
+            self.progress_bar.max = savings_goal
+            self.progress_bar.value = balance
+
         else:
             self.savings_goal_label.text = "No Savings Goal Set"
 
@@ -648,6 +781,13 @@ class ChildScreen(BaseScreen):
 
     def logout_button_click(self, instance):
         self.manager.current = "login"
+
+    def balance_update_button_click(self, instance):
+        self.manager.current = "balance_update"
+        
+    def update_balance_label(self, balance):
+        self.balance_label.text = f"Balance: ${balance:.2f}"  # Display balance with two decimal places
+        
 
 
 class AssignedTasksScreen(BaseScreen):
@@ -958,10 +1098,10 @@ class MyApp(App):
         sm.add_widget(child_tasks)
         sm.add_widget(create_task)
         sm.add_widget(SavingsGoalScreen(name="savings_goal"))
+        sm.add_widget(BalanceUpdateScreen(name="balance_update"))
 
         return sm
 
 
 if __name__ == '__main__':
     MyApp().run()
-
