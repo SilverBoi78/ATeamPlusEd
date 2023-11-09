@@ -85,6 +85,18 @@ def insert_child(username, password, parent):
     cursor.execute("INSERT INTO users (username, password, parent) VALUES (?, ?, ?)",
                    (username, password, parent))
 
+#define an insert_balance function that will insert the balance into the database
+def insert_balance(username, balance):
+    cursor.execute("INSERT INTO balance (username, balance) VALUES (?, ?)",
+                   (username, balance))
+    #define a get_balance function that will get the balance from the database
+def get_balance(username):
+    cursor.execute("SELECT balance FROM balance WHERE username = ?", (username,))
+    result = cursor.fetchone()
+    if result:
+        return result[0]  # Return the balance
+    else:
+        return None  # Return None if there is no balance
 
 def insert_goal(username, goal_name, goal_amount):
     cursor.execute("SELECT * FROM savings_goals WHERE username = ? AND goal_name = ?", (username, goal_name))
@@ -478,6 +490,8 @@ class AccountCreationScreenChild(BaseScreen):
 
 
 class ParentScreen(BaseScreen):
+    username = StringProperty(None)  # Define username as a Kivy property
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -533,6 +547,19 @@ class ParentScreen(BaseScreen):
     def balance_edit_button_click(self, instance):
         self.manager.current = "balance_edit"
 
+    #define an on_enter function that will update the balance label from the database when the screen is entered
+    def on_enter(self):
+        username = self.manager.username
+        get_balance(username)
+
+        # Pass the balance to def __init__ so that it can be displayed.
+        self.balance_label = get_balance(username)
+        # Print the balance to the console for debugging purposes.
+        print(self.balance)
+        # Call display_balance to create and add widgets
+        self.display_balance()
+        # Clear the screen of any widgets from the previous screen.
+        self.window.clear_widgets()
     def assigned_tasks_button_click(self, instance):
         self.manager.current = "assigned_tasks"
 
@@ -578,6 +605,7 @@ class BalanceEditScreen(BaseScreen):
         self.return_button.bind(on_press=self.return_button_click)
         self.add_widget(self.window)
 
+
     def set_balance_button_click(self, instance):
         try:
             balance = float(self.balance_input.text)
@@ -589,6 +617,7 @@ class BalanceEditScreen(BaseScreen):
 
     def return_button_click(self, instance):
         self.manager.current = "parent"
+
 
 class SavingsGoalScreen(BaseScreen):
     def __init__(self, **kwargs):
